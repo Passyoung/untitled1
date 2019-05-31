@@ -25,6 +25,7 @@ def FileToDict(fileName):
     res = {}
     for content in contents:
         temp = content.split(' ')
+        # print(temp)
         res.update({temp[1]: temp[0]})
     return res
 
@@ -99,6 +100,7 @@ def DNSConstructor(info, ip):
     res = struct.pack('>HHHHHH', hearder['id'], flags, hearder['quests'], answers, hearder['author'], hearder['addition'])
     res += queryInfo['queryBytes'] + struct.pack('>HH', queryInfo['queryType'], queryInfo['queryClassify'])
     res += DNSAnsConstructor(ip)
+    #print(res)
     return res
 
 
@@ -130,13 +132,13 @@ def DebugInfoLevel3(currTime, dnsRequest, res):
     print('TIME:\t\t', currTime)
     print('ID:\t\t', dnsRequest['header']['id'])
     print('flag:\t\t', dnsRequest['header']['flags'])
-    print('question:\t\t', dnsRequest['header']['quests'])
+    print('question:\t', dnsRequest['header']['quests'])
     print('answer:\t\t', dnsRequest['header']['answers'])
-    print('authority:\t\t', dnsRequest['header']['author'])
-    print('additional:\t\t', dnsRequest['header']['addition'])
+    print('authority:\t', dnsRequest['header']['author'])
+    print('additional:\t', dnsRequest['header']['addition'])
     print('domain:\t\t', dnsRequest['queryInfo']['domain'])
     print('type:\t\t', dnsRequest['queryInfo']['queryType'])
-    print('classify:\t\t', dnsRequest['queryInfo']['queryClassify'])
+    print('classify:\t', dnsRequest['queryInfo']['queryClassify'])
     print('len:\t\t', dnsRequest['queryInfo']['queryLen'])
     print('------------------------------')
     print('RESULT:\t\t', res)
@@ -147,12 +149,13 @@ class DNSHandler(socketserver.BaseRequestHandler):
     def handle(self):
         currTime = str(int(time.time()))
         dnsRequest = DNSDestructor(self.request[0].strip())
-        #print(self.request[0].strip())
         socketInfo = self.request[1]
+        #print(self.request[1])
         if dnsRequest['queryInfo']['queryType'] == 1:
             # A records
             hostsInFile = DNSServer.hosts
             requestDomain = dnsRequest['queryInfo']['domain']
+            # print(requestDomain)
             if requestDomain in hostsInFile:
                 # record in file
                 if not hostsInFile[requestDomain] == '0.0.0.0':
@@ -166,8 +169,10 @@ class DNSHandler(socketserver.BaseRequestHandler):
                     # 0.0.0.0
                     if DNSServer.mode == 2:
                         DebugInfoLevel2(currTime, requestDomain, dnsRequest['header']['id'])
+                        print("Waring! This website is forbidden to browsing")
                     elif DNSServer.mode == 3:
                         DebugInfoLevel3(currTime, dnsRequest, hostsInFile[requestDomain])
+                        print("Waring! This website is forbidden to browsing")
                     socketInfo.sendto(self.request[0].strip(), self.client_address)
             else:
                 # ask higher level DNS server
@@ -186,6 +191,7 @@ class DNSHandler(socketserver.BaseRequestHandler):
                     elif DNSServer.mode == 3:
                         DebugInfoLevel3(currTime, dnsRequest, 'NOT FOUND')
                     socketInfo.sendto(self.request[0].strip(), self.client_address)
+                    # print(self.request[0])
                     # print('NOT FOUND')
         else:
             # NOT an A type request
